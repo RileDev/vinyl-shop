@@ -99,13 +99,30 @@ router.delete('/addresses/:id', auth, (req, res) => {
 // GET /api/auth/orders — user's own orders
 router.get('/orders', auth, (req, res) => {
   const orders = db.prepare(`
-    SELECT o.*, GROUP_CONCAT(oi.product_id || ':' || oi.quantity || ':' || oi.unit_price) as items_raw
+    SELECT 
+      o.*, 
+      (
+        SELECT json_group_array(json_object(
+          'product_id', oi.product_id,
+          'quantity', oi.quantity,
+          'unit_price', oi.unit_price,
+          'title', p.title,
+          'image_url', p.image_url
+        ))
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = o.id
+      ) as items
     FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
     WHERE o.user_id = ?
-    GROUP BY o.id
     ORDER BY o.created_at DESC
   `).all(req.user.id);
+  
+  // Parse the JSON string from sqlite into actual array
+  orders.forEach(o => {
+    o.items = JSON.parse(o.items || '[]');
+  });
+
   res.json(orders);
 });
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { getImageUrl } from '../utils/getImageUrl';
 import './ImageUploader.css';
 
 const API = 'http://localhost:5000/api';
@@ -95,7 +96,7 @@ export default function ImageUploader({ value, onChange, token, productId, galle
     if (files.length) uploadGalleryFiles(files);
   };
 
-  const previewUrl = value ? (value.startsWith('/') ? `http://localhost:5000${value}` : value) : null;
+  const previewUrl = value ? getImageUrl(value) : null;
 
   return (
     <div className="img-uploader">
@@ -171,7 +172,7 @@ export default function ImageUploader({ value, onChange, token, productId, galle
             <div className="img-uploader__gallery-grid">
               {gallery.map(img => (
                 <div key={img.id} className="img-uploader__gallery-item">
-                  <img src={img.image_url.startsWith('/') ? `http://localhost:5000${img.image_url}` : img.image_url} alt="" />
+                  <img src={getImageUrl(img.image_url)} alt="" />
                   <button
                     type="button"
                     className="img-uploader__gallery-remove"

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './Footer.css';
 
 const API = 'http://localhost:5000/api';
 
 export default function Footer() {
   const [settings, setSettings] = useState({});
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch(`${API}/settings`)
@@ -24,7 +26,7 @@ export default function Footer() {
               <span className="footer__logo-icon">◉</span>
               {settings.site_name || 'Vinyl Shop'}
             </Link>
-            <p className="footer__tagline">{settings.site_tagline || 'Premium Records & CDs'}</p>
+            <p className="footer__tagline">{settings.site_tagline || t('footer.tagline')}</p>
             <div className="footer__socials">
               {settings.facebook_url && <a href={settings.facebook_url} target="_blank" rel="noreferrer" aria-label="Facebook">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
@@ -40,34 +42,54 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="footer__col">
-            <h4>Quick Links</h4>
-            <Link to="/catalog">Full Catalog</Link>
-            <Link to="/catalog?category=vinyls">Vinyls</Link>
-            <Link to="/catalog?category=cds">CDs</Link>
-            <Link to="/catalog?region=ex-yu">EX-YU Collection</Link>
+            <h4>{t('footer.quickLinks')}</h4>
+            <Link to="/catalog">{t('footer.fullCatalog')}</Link>
+            <Link to="/catalog?category=vinyls">{t('footer.vinyls')}</Link>
+            <Link to="/catalog?category=cds">{t('footer.cds')}</Link>
+            <Link to="/catalog?region=ex-yu">{t('footer.exYuCollection')}</Link>
           </div>
 
           {/* Account */}
           <div className="footer__col">
-            <h4>Account</h4>
-            <Link to="/login">Sign In</Link>
-            <Link to="/register">Create Account</Link>
-            <Link to="/account">My Account</Link>
-            <Link to="/cart">Shopping Cart</Link>
+            <h4>{t('footer.account')}</h4>
+            <Link to="/login">{t('footer.signIn')}</Link>
+            <Link to="/register">{t('footer.createAccount')}</Link>
+            <Link to="/account">{t('footer.myAccount')}</Link>
+            <Link to="/cart">{t('footer.shoppingCart')}</Link>
           </div>
 
           {/* Contact */}
           <div className="footer__col">
-            <h4>Contact</h4>
-            {settings.physical_address && <p className="footer__contact-item">📍 {settings.physical_address}</p>}
-            {settings.contact_phone && <p className="footer__contact-item">📞 {settings.contact_phone}</p>}
-            {settings.contact_email && <p className="footer__contact-item">✉️ {settings.contact_email}</p>}
-            {settings.working_hours && <p className="footer__contact-item">🕐 {settings.working_hours}</p>}
+            <h4>{t('footer.contact')}</h4>
+            {settings.physical_address && (
+              <p className="footer__contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="footer__contact-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {settings.physical_address}
+              </p>
+            )}
+            {settings.contact_phone && (
+              <p className="footer__contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="footer__contact-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                {settings.contact_phone}
+              </p>
+            )}
+            {settings.contact_email && (
+              <p className="footer__contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="footer__contact-icon"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                {settings.contact_email}
+              </p>
+            )}
+            {settings.working_hours && (
+              <p className="footer__contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="footer__contact-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {settings.working_hours}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="footer__bottom">
-          <p>© {new Date().getFullYear()} {settings.site_name || 'Vinyl Shop'}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {settings.site_name || 'Vinyl Shop'}. {t('footer.allRightsReserved')}</p>
         </div>
       </div>
     </footer>

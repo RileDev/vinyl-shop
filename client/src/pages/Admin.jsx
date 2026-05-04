@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ImageUploader from '../components/ImageUploader';
+import { getImageUrl } from '../utils/getImageUrl';
 import './Admin.css';
 
 const API = 'http://localhost:5000/api';
@@ -20,11 +21,11 @@ export default function Admin() {
   const h = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   const tabs = [
-    { key: 'dashboard', label: '📊 Dashboard', icon: '' },
-    { key: 'products', label: '📦 Products', icon: '' },
-    { key: 'orders', label: '🧾 Orders', icon: '' },
-    { key: 'users', label: '👥 Users', icon: '' },
-    { key: 'settings', label: '⚙️ Settings', icon: '' },
+    { key: 'dashboard', label: 'Dashboard', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> },
+    { key: 'products', label: 'Products', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
+    { key: 'orders', label: 'Orders', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+    { key: 'users', label: 'Users', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+    { key: 'settings', label: 'Settings', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
   ];
 
   return (
@@ -41,7 +42,8 @@ export default function Admin() {
               className={`admin__sidebar-item ${tab === t.key ? 'admin__sidebar-item--active' : ''}`}
               onClick={() => setTab(t.key)}
             >
-              {t.label}
+              <span className="admin__sidebar-icon">{t.icon}</span>
+              <span>{t.label}</span>
             </button>
           ))}
         </nav>
@@ -61,18 +63,33 @@ export default function Admin() {
 /* ── Dashboard Tab ── */
 function DashboardTab({ h }) {
   const [stats, setStats] = useState(null);
+  const [activeList, setActiveList] = useState('recent_orders');
+
+  const fetchStats = () => {
+    fetch(`${API}/admin/stats`, { headers: h }).then(r => r.json()).then(setStats).catch(() => {});
+  };
 
   useEffect(() => {
-    fetch(`${API}/admin/stats`, { headers: h }).then(r => r.json()).then(setStats).catch(() => {});
+    fetchStats();
   }, []);
+
+  const updateOrderStatus = async (id, currentStatus) => {
+    const nextStatus = currentStatus === 'New' ? 'Processing' : 
+                       currentStatus === 'Processing' ? 'Shipped' : 'Completed';
+    
+    await fetch(`${API}/admin/orders/${id}/status`, {
+      method: 'PUT', headers: h, body: JSON.stringify({ status: nextStatus }),
+    });
+    fetchStats();
+  };
 
   if (!stats) return <div className="skeleton" style={{ height: 200 }}></div>;
 
   const cards = [
-    { label: 'Total Revenue', value: `$${stats.total_revenue?.toFixed(2) || '0.00'}`, color: 'var(--accent)' },
-    { label: 'Pending Orders', value: stats.pending_orders || 0, color: 'var(--warning)' },
-    { label: 'Low Stock Items', value: stats.low_stock || 0, color: 'var(--danger)' },
-    { label: 'Total Users', value: stats.total_users || 0, color: 'var(--info)' },
+    { id: 'recent_orders', label: 'Total Revenue', value: `$${stats.total_revenue?.toFixed(2) || '0.00'}`, color: 'var(--accent)' },
+    { id: 'pending_orders', label: 'Pending Orders', value: stats.pending_orders || 0, color: 'var(--warning)' },
+    { id: 'low_stock', label: 'Low Stock Items', value: stats.low_stock || 0, color: 'var(--danger)' },
+    { id: 'total_users', label: 'Total Users', value: stats.total_users || 0, color: 'var(--info)' },
   ];
 
   return (
@@ -80,15 +97,30 @@ function DashboardTab({ h }) {
       <h1 className="admin__page-title">Dashboard</h1>
       <div className="admin__stats-grid">
         {cards.map(c => (
-          <div key={c.label} className="admin__stat-card glass-card">
+          <div 
+            key={c.id} 
+            className="admin__stat-card glass-card"
+            style={{ 
+              cursor: c.id !== 'total_users' ? 'pointer' : 'default',
+              boxShadow: activeList === c.id ? `0 0 0 1px ${c.color}` : '' 
+            }}
+            onClick={() => {
+              if (c.id !== 'total_users') setActiveList(c.id);
+            }}
+          >
             <p className="admin__stat-label">{c.label}</p>
             <p className="admin__stat-value" style={{ color: c.color }}>{c.value}</p>
           </div>
         ))}
       </div>
       <div className="admin__recent glass-card">
-        <h3>Recent Orders</h3>
-        {(stats.recent_orders || []).map(o => (
+        <h3>
+          {activeList === 'recent_orders' && 'Recent Orders'}
+          {activeList === 'pending_orders' && 'Pending Orders'}
+          {activeList === 'low_stock' && 'Low Stock Items'}
+        </h3>
+        
+        {activeList === 'recent_orders' && (stats.recent_orders || []).map(o => (
           <div key={o.id} className="admin__recent-row">
             <span>#{o.id}</span>
             <span>{o.ship_name}</span>
@@ -96,6 +128,78 @@ function DashboardTab({ h }) {
             <span>${o.total.toFixed(2)}</span>
           </div>
         ))}
+
+        {activeList === 'pending_orders' && (stats.pending_orders_list || []).map(o => (
+          <div key={o.id} className="admin__recent-row">
+            <span>#{o.id}</span>
+            <span>{o.ship_name}</span>
+            <span className={`badge badge-${o.status === 'Completed' ? 'success' : o.status === 'Cancelled' ? 'danger' : 'warning'}`}>{o.status}</span>
+            <span>${o.total.toFixed(2)}</span>
+            {(o.status === 'New' || o.status === 'Processing') && (
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={() => updateOrderStatus(o.id, o.status)}
+                style={{ marginLeft: 'auto', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+              >
+                {o.status === 'New' ? 'Mark Processing' : 'Mark Shipped'}
+              </button>
+            )}
+          </div>
+        ))}
+
+        {activeList === 'low_stock' && (stats.low_stock_list || []).map(p => (
+          <LowStockRow key={p.id} p={p} h={h} fetchStats={fetchStats} />
+        ))}
+        
+        {activeList === 'recent_orders' && (stats.recent_orders || []).length === 0 && <p className="text-muted" style={{marginTop: '1rem'}}>No recent orders.</p>}
+        {activeList === 'pending_orders' && (stats.pending_orders_list || []).length === 0 && <p className="text-muted" style={{marginTop: '1rem'}}>No pending orders.</p>}
+        {activeList === 'low_stock' && (stats.low_stock_list || []).length === 0 && <p className="text-muted" style={{marginTop: '1rem'}}>No low stock items.</p>}
+      </div>
+    </div>
+  );
+}
+
+function LowStockRow({ p, h, fetchStats }) {
+  const [stock, setStock] = useState('');
+
+  const updateStock = async () => {
+    const val = parseInt(stock, 10);
+    if (isNaN(val) || val < 0) {
+      alert('Please enter a valid positive number.');
+      return;
+    }
+    if (confirm(`Are you sure you want to update stock for "${p.title}" to ${val}?`)) {
+      await fetch(`${API}/admin/products/${p.id}/stock`, {
+        method: 'PUT',
+        headers: h,
+        body: JSON.stringify({ stock_count: val })
+      });
+      setStock('');
+      fetchStats();
+    }
+  };
+
+  return (
+    <div className="admin__recent-row">
+      <span>#{p.id}</span>
+      <span style={{ flex: 2 }}>{p.title} - {p.artist}</span>
+      <span className="text-danger" style={{ minWidth: '80px' }}>Stock: {p.stock_count}</span>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginLeft: 'auto' }}>
+        <input 
+          type="number" 
+          value={stock} 
+          onChange={e => setStock(e.target.value)} 
+          placeholder="Qty"
+          min="0"
+          style={{ width: '60px', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+        />
+        <button 
+          className="btn btn-primary btn-sm" 
+          onClick={updateStock}
+          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+        >
+          Restore
+        </button>
       </div>
     </div>
   );
@@ -211,7 +315,7 @@ function ProductsTab({ h, token }) {
               <tr key={p.id}>
                 <td>
                   {p.image_url ? (
-                    <img src={p.image_url.startsWith('/') ? `http://localhost:5000${p.image_url}` : p.image_url} alt="" className="admin__product-thumb" />
+                    <img src={getImageUrl(p.image_url)} alt="" className="admin__product-thumb" />
                   ) : (
                     <div className="admin__product-thumb admin__product-thumb--empty">📷</div>
                   )}

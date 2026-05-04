@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 const { auth, optionalAuth } = require('../middleware/auth');
 
 // POST /api/orders — create order (guest or authenticated)
-router.post('/', optionalAuth, (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   const {
     items, payment_method,
     ship_name, ship_street, ship_city, ship_postal, ship_phone,
-    guest_email, save_address
+    guest_email, save_address, create_account, password
   } = req.body;
 
   if (!items || !items.length) {
@@ -19,6 +20,21 @@ router.post('/', optionalAuth, (req, res) => {
   }
 
   try {
+    let finalUserId = req.user?.id || null;
+
+    if (!finalUserId && create_account && guest_email && password) {
+      if (password.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      }
+      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(guest_email);
+      if (existing) {
+        return res.status(400).json({ message: 'Email already registered. Please sign in or use a different email.' });
+      }
+      const hash = await bcrypt.hash(password, 10);
+      const info = db.prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)').run(ship_name, guest_email, hash);
+      finalUserId = info.lastInsertRowid;
+    }
+
     // Calculate totals from DB prices (don't trust client prices)
     let subtotal = 0;
     const resolvedItems = [];
@@ -43,7 +59,7 @@ router.post('/', optionalAuth, (req, res) => {
         ship_name, ship_street, ship_city, ship_postal, ship_country, ship_phone, guest_email)
       VALUES (?, 'New', ?, ?, ?, ?, ?, ?, ?, ?, 'Serbia', ?, ?)
     `).run(
-      req.user?.id || null, payment_method, subtotal, shipping_cost, total,
+      finalUserId, payment_method, subtotal, shipping_cost, total,
       ship_name, ship_street, ship_city, ship_postal, ship_phone || null, guest_email || null
     );
 
@@ -62,10 +78,10 @@ router.post('/', optionalAuth, (req, res) => {
     db.prepare("INSERT INTO order_status_history (order_id, new_status, note) VALUES (?, 'New', 'Order placed')").run(orderId);
 
     // Save address if requested
-    if (req.user && save_address) {
+    if (finalUserId && save_address) {
       db.prepare(
         'INSERT INTO user_addresses (user_id, label, full_name, street, city, postal_code, phone) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).run(req.user.id, 'Shipping', ship_name, ship_street, ship_city, ship_postal, ship_phone || null);
+      ).run(finalUserId, 'Shipping', ship_name, ship_street, ship_city, ship_postal, ship_phone || null);
     }
 
     res.status(201).json({ id: orderId, total, message: 'Order placed successfully' });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Auth.css';
 
 export default function Register() {
@@ -10,6 +11,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -31,29 +33,29 @@ export default function Register() {
     <div className="auth-page container">
       <div className="auth-card glass-card fade-in">
         <div className="auth-card__header">
-          <h1>Create Account</h1>
-          <p>Join the Vinyl Shop community</p>
+          <h1>{t('auth.createAccount')}</h1>
+          <p>{t('auth.joinUs')}</p>
         </div>
         {error && <div className="auth-card__error">{error}</div>}
         <form onSubmit={handleSubmit} className="auth-card__form">
           <div className="form-group">
-            <label htmlFor="name">Full Name</label>
+            <label htmlFor="name">{t('auth.name')}</label>
             <input id="name" type="text" value={name} onChange={e => setName(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t('auth.email')}</label>
             <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t('auth.password')}</label>
             <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
           <button className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Creating...' : 'Create Account'}
+            {loading ? '...' : t('auth.createAccount')}
           </button>
         </form>
         <p className="auth-card__footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t('auth.alreadyHaveAccount')} <Link to="/login">{t('auth.signIn')}</Link>
         </p>
       </div>
     </div>

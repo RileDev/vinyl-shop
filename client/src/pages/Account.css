@@ -68,6 +68,10 @@
   transition: border-color var(--transition);
 }
 .account__order-card:hover { border-color: var(--border-hover); }
+.account__order-card--expanded { border-color: var(--accent); }
+
+.account__order-summary { cursor: pointer; }
+
 .account__order-header {
   display: flex;
   justify-content: space-between;
@@ -77,8 +81,78 @@
 .account__order-details {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+.account__order-icon { transition: transform var(--transition); }
+.account__order-icon.rotated { transform: rotate(180deg); color: var(--accent); }
+
+.account__order-expanded {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  animation: fadeIn 0.3s ease;
+}
+
+.account__order-items h4, .account__order-meta-col h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.account__order-item-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.account__order-item-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.account__order-item-info { flex: 1; display: flex; flex-direction: column; }
+.account__order-item-title { font-weight: 500; font-size: 0.9rem; }
+.account__order-item-qty { font-size: 0.8rem; color: var(--text-secondary); }
+.account__order-item-price { font-weight: 600; font-size: 0.9rem; }
+
+.account__order-meta {
+  display: flex;
+  gap: 1.5rem;
+  background: var(--bg-elevated);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  margin-top: 1rem;
+}
+.account__order-meta-col { flex: 1; }
+.account__order-meta-col p { margin: 0 0 0.2rem 0; font-size: 0.85rem; color: var(--text-secondary); }
+
+.account__order-summary-block {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.account__order-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.account__order-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 /* Wishlist */

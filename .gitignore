@@ -6,6 +6,7 @@ node_modules/
 vinylshop.db
 vinylshop.db-wal
 vinylshop.db-shm
+server/database.sqlite
 
 # Environment
 .env

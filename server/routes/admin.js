@@ -21,7 +21,17 @@ router.get('/stats', (req, res) => {
       FROM orders o ORDER BY o.created_at DESC LIMIT 10
     `).all();
 
-    res.json({ total_revenue, pending_orders, low_stock, total_users, total_products, total_orders, recent_orders });
+    const pending_orders_list = db.prepare(`
+      SELECT o.id, o.ship_name, o.status, o.total, o.payment_method, o.created_at
+      FROM orders o WHERE o.status IN ('New', 'Processing') ORDER BY o.created_at DESC
+    `).all();
+
+    const low_stock_list = db.prepare(`
+      SELECT p.id, p.title, p.artist, p.stock_count, p.price, p.image_url 
+      FROM products p WHERE p.stock_count < 5 AND p.is_active = 1 ORDER BY p.stock_count ASC
+    `).all();
+
+    res.json({ total_revenue, pending_orders, low_stock, total_users, total_products, total_orders, recent_orders, pending_orders_list, low_stock_list });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -102,6 +112,19 @@ router.put('/products/:id', (req, res) => {
     }
 
     res.json({ message: 'Product updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update product stock only
+router.put('/products/:id/stock', (req, res) => {
+  const { stock_count } = req.body;
+  if (stock_count === undefined) return res.status(400).json({ message: 'stock_count is required' });
+  
+  try {
+    db.prepare("UPDATE products SET stock_count = ?, updated_at = datetime('now') WHERE id = ?").run(stock_count, req.params.id);
+    res.json({ message: 'Stock updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

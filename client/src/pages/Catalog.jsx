@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
+import { useLanguage } from '../context/LanguageContext';
 import './Catalog.css';
 
 const API = 'http://localhost:5000/api';
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [genres, setGenres] = useState([]);
@@ -56,8 +58,8 @@ export default function Catalog() {
   return (
     <div className="catalog container">
       <div className="catalog__header">
-        <h1 className="section-title">Catalog</h1>
-        <p className="catalog__count">{products.length} product{products.length !== 1 ? 's' : ''}</p>
+        <h1 className="section-title">{t('catalog.title')}</h1>
+        <p className="catalog__count">{products.length === 1 ? t('catalog.productCount', { count: 1 }) : t('catalog.productsCount', { count: products.length })}</p>
       </div>
 
       <div className="catalog__layout">
@@ -65,10 +67,10 @@ export default function Catalog() {
         <aside className="catalog__sidebar">
           {/* Search */}
           <div className="catalog__filter-group">
-            <label>Search</label>
+            <label>{t('catalog.search')}</label>
             <input
               type="text"
-              placeholder="Artist or title..."
+              placeholder={t('catalog.searchPlaceholder')}
               value={activeSearch}
               onChange={e => setFilter('search', e.target.value)}
             />
@@ -76,7 +78,7 @@ export default function Catalog() {
 
           {/* Category */}
           <div className="catalog__filter-group">
-            <label>Category</label>
+            <label>{t('catalog.category')}</label>
             <div className="catalog__chips">
               {categories.map(c => (
                 <button
@@ -92,7 +94,7 @@ export default function Catalog() {
 
           {/* Genre */}
           <div className="catalog__filter-group">
-            <label>Genre</label>
+            <label>{t('catalog.genre')}</label>
             <div className="catalog__chips">
               {genres.map(g => (
                 <button
@@ -108,7 +110,7 @@ export default function Catalog() {
 
           {/* Region */}
           <div className="catalog__filter-group">
-            <label>Region</label>
+            <label>{t('catalog.region')}</label>
             <div className="catalog__chips">
               {regions.map(r => (
                 <button
@@ -124,7 +126,7 @@ export default function Catalog() {
 
           {hasFilters && (
             <button className="btn btn-secondary" onClick={clearFilters} style={{ width: '100%', marginTop: '0.5rem' }}>
-              Clear All Filters
+              {t('catalog.clearAllFilters')}
             </button>
           )}
         </aside>
@@ -139,8 +141,8 @@ export default function Catalog() {
             </div>
           ) : products.length === 0 ? (
             <div className="catalog__empty">
-              <p>No products found matching your criteria.</p>
-              <button className="btn btn-outline" onClick={clearFilters}>Clear Filters</button>
+              <p>{t('catalog.noProducts')}</p>
+              <button className="btn btn-outline" onClick={clearFilters}>{t('catalog.clearFilters')}</button>
             </div>
           ) : (
             <div className="catalog__grid">

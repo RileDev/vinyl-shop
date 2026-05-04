@@ -9,6 +9,8 @@ export function CartProvider({ children }) {
     } catch { return []; }
   });
 
+  const [notification, setNotification] = useState(null);
+
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);
@@ -23,6 +25,18 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, quantity: qty }];
     });
+    
+    // Trigger notification
+    setNotification({
+      id: Date.now(),
+      message: `Added ${qty}x ${product.title} to cart`,
+      type: 'success'
+    });
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
   };
 
   const removeItem = (productId) => {
@@ -40,7 +54,10 @@ export function CartProvider({ children }) {
   const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ 
+      items, addItem, removeItem, updateQuantity, clearCart, 
+      totalItems, totalPrice, notification, setNotification 
+    }}>
       {children}
     </CartContext.Provider>
   );
