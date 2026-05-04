@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.npm
+
+# Database (generated — recreate with database/init.sh)
+vinylshop.db
+vinylshop.db-wal
+vinylshop.db-shm
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build output
+client/dist/
+server/uploads/*
+!server/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
