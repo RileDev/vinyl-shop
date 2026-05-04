@@ -68,7 +68,7 @@
 .header__search-input {
   width: 100%;
   height: 40px;
-  padding: 0 45px 0 1.25rem;
+  padding: 0 42px 0 1.5rem; /* Increased left padding for symmetry */
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 20px; /* Oval border */
@@ -84,7 +84,7 @@
 }
 .header__search-btn {
   position: absolute;
-  right: 4px;
+  right: 5px; /* Moved slightly left for better balance */
   top: 4px;
   width: 32px;
   height: 32px;

@@ -15,7 +15,8 @@ const translations = {
       orderHistory: 'Order History',
       signOut: 'Sign Out',
       signIn: 'Sign In',
-      cart: 'Cart'
+      cart: 'Cart',
+      searchPlaceholder: 'Search records, artists...'
     },
     footer: {
       tagline: 'Premium Records & CDs',
@@ -194,7 +195,8 @@ const translations = {
       orderHistory: 'Istorija narudžbina',
       signOut: 'Odjavi se',
       signIn: 'Prijavi se',
-      cart: 'Korpa'
+      cart: 'Korpa',
+      searchPlaceholder: 'Pretraži ploče, izvođače...'
     },
     footer: {
       tagline: 'Vrhunske ploče i CD-ovi',
