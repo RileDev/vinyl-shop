@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ImageUploader from '../components/ImageUploader';
 import './Admin.css';
 
 const API = 'http://localhost:5000/api';
@@ -48,7 +49,7 @@ export default function Admin() {
 
       <main className="admin__main">
         {tab === 'dashboard' && <DashboardTab h={h} />}
-        {tab === 'products' && <ProductsTab h={h} />}
+        {tab === 'products' && <ProductsTab h={h} token={token} />}
         {tab === 'orders' && <OrdersTab h={h} />}
         {tab === 'users' && <UsersTab h={h} />}
         {tab === 'settings' && <SettingsTab h={h} />}
@@ -101,12 +102,13 @@ function DashboardTab({ h }) {
 }
 
 /* ── Products Tab ── */
-function ProductsTab({ h }) {
+function ProductsTab({ h, token }) {
   const [products, setProducts] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [categories, setCategories] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [gallery, setGallery] = useState([]);
 
   useEffect(() => {
     loadProducts();
@@ -123,6 +125,15 @@ function ProductsTab({ h }) {
   const startEdit = (p) => {
     setEditing(p ? p.id : 'new');
     setForm(p || { title: '', artist: '', description: '', price: 0, category_id: 1, genre_id: 1, stock_count: 0, image_url: '', section: '' });
+    // Load gallery for existing products
+    if (p) {
+      fetch(`${API}/products/${p.id}`).then(r => r.json()).then(prod => {
+        const imgs = (prod.images || []).map((url, i) => ({ id: i + 1, image_url: url }));
+        setGallery(imgs);
+      }).catch(() => setGallery([]));
+    } else {
+      setGallery([]);
+    }
   };
 
   const saveProduct = async (e) => {
@@ -165,7 +176,14 @@ function ProductsTab({ h }) {
                 {genres.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
-            <div className="form-group"><label>Image URL</label><input value={form.image_url || ''} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} /></div>
+            <ImageUploader
+              value={form.image_url}
+              onChange={(url) => setForm(f => ({ ...f, image_url: url }))}
+              token={token}
+              productId={editing !== 'new' ? editing : null}
+              gallery={gallery}
+              onGalleryChange={editing !== 'new' ? setGallery : undefined}
+            />
             <div className="form-group"><label>Homepage Section</label>
               <select value={form.section || ''} onChange={e => setForm(f => ({ ...f, section: e.target.value }))}>
                 <option value="">None</option>
@@ -186,11 +204,18 @@ function ProductsTab({ h }) {
       <div className="admin__table-wrap">
         <table className="admin__table">
           <thead>
-            <tr><th>ID</th><th>Title</th><th>Artist</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+            <tr><th></th><th>ID</th><th>Title</th><th>Artist</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {products.map(p => (
               <tr key={p.id}>
+                <td>
+                  {p.image_url ? (
+                    <img src={p.image_url.startsWith('/') ? `http://localhost:5000${p.image_url}` : p.image_url} alt="" className="admin__product-thumb" />
+                  ) : (
+                    <div className="admin__product-thumb admin__product-thumb--empty">📷</div>
+                  )}
+                </td>
                 <td>{p.id}</td>
                 <td>{p.title}</td>
                 <td>{p.artist}</td>

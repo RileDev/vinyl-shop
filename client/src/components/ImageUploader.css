@@ -1,0 +1,211 @@
+/* Image Uploader */
+
+.img-uploader {
+  grid-column: 1 / -1;
+}
+
+.img-uploader__label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+/* Dropzone */
+.img-uploader__dropzone {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--transition);
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.img-uploader__dropzone:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+.img-uploader__dropzone--active {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  box-shadow: 0 0 0 3px rgba(212,168,83,0.15);
+}
+.img-uploader__dropzone--uploading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Preview */
+.img-uploader__preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.img-uploader__preview img {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  background: var(--bg-secondary);
+  padding: 0.5rem;
+}
+.img-uploader__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,15,0.7);
+  opacity: 0;
+  transition: opacity var(--transition);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+.img-uploader__dropzone:hover .img-uploader__overlay {
+  opacity: 1;
+}
+
+/* Placeholder */
+.img-uploader__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.img-uploader__placeholder svg {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+.img-uploader__hint {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Loading */
+.img-uploader__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--accent);
+}
+
+.img-uploader__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* URL row */
+.img-uploader__url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.img-uploader__or {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.img-uploader__url-input {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+}
+
+/* Error */
+.img-uploader__error {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: var(--danger);
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  margin-top: 0.5rem;
+}
+
+/* Gallery section */
+.img-uploader__gallery-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.img-uploader__gallery-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.img-uploader__gallery-header .img-uploader__label {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.img-uploader__gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.6rem;
+}
+
+.img-uploader__gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: border-color var(--transition);
+}
+.img-uploader__gallery-item:hover {
+  border-color: var(--border-hover);
+}
+.img-uploader__gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-uploader__gallery-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(248,113,113,0.9);
+  color: white;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+  line-height: 1;
+}
+.img-uploader__gallery-item:hover .img-uploader__gallery-remove {
+  opacity: 1;
+}
+.img-uploader__gallery-remove:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+}
+
+.img-uploader__gallery-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+}
