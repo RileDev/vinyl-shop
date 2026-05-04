@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import ImageUploader from '../components/ImageUploader';
 import { getImageUrl } from '../utils/getImageUrl';
@@ -64,14 +67,38 @@ export default function Admin() {
 function DashboardTab({ h }) {
   const [stats, setStats] = useState(null);
   const [activeList, setActiveList] = useState('recent_orders');
+  const [showChart, setShowChart] = useState(false);
+  const [revenueData, setRevenueData] = useState([]);
+  const [annualGrowth, setAnnualGrowth] = useState(0);
+  const [chartRange, setChartRange] = useState('week');
+  const [chartYear, setChartYear] = useState(new Date().getFullYear());
+  const [orderDateFilter, setOrderDateFilter] = useState(''); // 'today', 'yesterday', or 'YYYY-MM-DD'
+  const [customDate, setCustomDate] = useState('');
 
   const fetchStats = () => {
-    fetch(`${API}/admin/stats`, { headers: h }).then(r => r.json()).then(setStats).catch(() => {});
+    let q = '';
+    if (orderDateFilter) q = `?date=${orderDateFilter}`;
+    fetch(`${API}/admin/stats${q}`, { headers: h }).then(r => r.json()).then(setStats).catch(() => {});
+  };
+
+  const fetchRevenueStats = () => {
+    const q = `?range=${chartRange}${chartRange === 'specific_year' ? `&year=${chartYear}` : ''}`;
+    fetch(`${API}/admin/revenue-stats${q}`, { headers: h })
+      .then(r => r.json())
+      .then(data => {
+        setRevenueData(data.data);
+        setAnnualGrowth(data.annual_growth);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [orderDateFilter]);
+
+  useEffect(() => {
+    if (showChart) fetchRevenueStats();
+  }, [showChart, chartRange, chartYear]);
 
   const updateOrderStatus = async (id, currentStatus) => {
     const nextStatus = currentStatus === 'New' ? 'Processing' : 
@@ -105,6 +132,9 @@ function DashboardTab({ h }) {
               boxShadow: activeList === c.id ? `0 0 0 1px ${c.color}` : '' 
             }}
             onClick={() => {
+              if (c.id === 'recent_orders') {
+                setShowChart(!showChart);
+              }
               if (c.id !== 'total_users') setActiveList(c.id);
             }}
           >
@@ -113,12 +143,117 @@ function DashboardTab({ h }) {
           </div>
         ))}
       </div>
+
+      {showChart && activeList === 'recent_orders' && (
+        <div className="admin__chart-container glass-card fade-in">
+          <div className="admin__chart-header">
+            <div className="admin__chart-title">
+              Cash Flow Analysis
+              {annualGrowth !== 0 && (
+                <span className={`admin__chart-growth ${annualGrowth > 0 ? 'admin__chart-growth--up' : 'admin__chart-growth--down'}`}>
+                  {annualGrowth > 0 ? '↑' : '↓'} {Math.abs(annualGrowth)}% Annual Growth
+                </span>
+              )}
+            </div>
+            <div className="admin__chart-filters">
+              {['daily', 'week', 'month', '3months', '6months', 'year', 'specific_year'].map(r => (
+                <button
+                  key={r}
+                  className={`admin__chart-range-btn ${chartRange === r ? 'admin__chart-range-btn--active' : ''}`}
+                  onClick={() => setChartRange(r)}
+                >
+                  {r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' ')}
+                </button>
+              ))}
+              {chartRange === 'specific_year' && (
+                <select 
+                  className="admin__chart-year-select"
+                  value={chartYear}
+                  onChange={e => setChartYear(parseInt(e.target.value))}
+                >
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart data={revenueData}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis 
+                  dataKey="label" 
+                  stroke="var(--text-muted)" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke="var(--text-muted)" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tickFormatter={v => `$${v}`}
+                />
+                <Tooltip 
+                  contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                  itemStyle={{ color: 'var(--accent)' }}
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Revenue']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="var(--accent)" 
+                  fillOpacity={1} 
+                  fill="url(#colorValue)" 
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       <div className="admin__recent glass-card">
-        <h3>
-          {activeList === 'recent_orders' && 'Recent Orders'}
-          {activeList === 'pending_orders' && 'Pending Orders'}
-          {activeList === 'low_stock' && 'Low Stock Items'}
-        </h3>
+        <div className="admin__recent-header">
+          <h3>
+            {activeList === 'recent_orders' && 'Recent Orders'}
+            {activeList === 'pending_orders' && 'Pending Orders'}
+            {activeList === 'low_stock' && 'Low Stock Items'}
+          </h3>
+          {activeList === 'recent_orders' && (
+            <div className="admin__recent-filters">
+              <button 
+                className={`catalog__chip ${!orderDateFilter ? 'catalog__chip--active' : ''}`}
+                onClick={() => { setOrderDateFilter(''); setCustomDate(''); }}
+              >All</button>
+              <button 
+                className={`catalog__chip ${orderDateFilter === 'today' ? 'catalog__chip--active' : ''}`}
+                onClick={() => setOrderDateFilter('today')}
+              >Today</button>
+              <button 
+                className={`catalog__chip ${orderDateFilter === 'yesterday' ? 'catalog__chip--active' : ''}`}
+                onClick={() => setOrderDateFilter('yesterday')}
+              >Yesterday</button>
+              <input 
+                type="date" 
+                className="admin__date-input"
+                value={customDate}
+                onChange={e => {
+                  setCustomDate(e.target.value);
+                  setOrderDateFilter(e.target.value);
+                }}
+              />
+            </div>
+          )}
+        </div>
         
         {activeList === 'recent_orders' && (stats.recent_orders || []).map(o => (
           <div key={o.id} className="admin__recent-row">
@@ -208,28 +343,65 @@ function LowStockRow({ p, h, fetchStats }) {
 /* ── Products Tab ── */
 function ProductsTab({ h, token }) {
   const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [categories, setCategories] = useState([]);
   const [genres, setGenres] = useState([]);
   const [gallery, setGallery] = useState([]);
 
+  // Filter/Pagination/Sort states
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [sort, setSort] = useState('id');
+  const [order, setOrder] = useState('DESC');
+
   useEffect(() => {
-    loadProducts();
     fetch(`${API}/products/filters`).then(r => r.json()).then(f => {
       setCategories(f.categories || []);
       setGenres(f.genres || []);
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    loadProducts();
+  }, [search, catFilter, genreFilter, page, limit, sort, order]);
+
   const loadProducts = () => {
-    fetch(`${API}/admin/products`, { headers: h }).then(r => r.json()).then(setProducts).catch(() => {});
+    const params = new URLSearchParams({
+      page,
+      limit,
+      sort,
+      order,
+      search: search || '',
+      category_id: catFilter || '',
+      genre_id: genreFilter || ''
+    });
+    fetch(`${API}/admin/products?${params.toString()}`, { headers: h })
+      .then(r => r.json())
+      .then(data => {
+        setProducts(data.products || []);
+        setTotal(data.total || 0);
+      })
+      .catch(() => {});
+  };
+
+  const handleSort = (col) => {
+    if (sort === col) {
+      setOrder(order === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      setSort(col);
+      setOrder('ASC');
+    }
+    setPage(1);
   };
 
   const startEdit = (p) => {
     setEditing(p ? p.id : 'new');
     setForm(p || { title: '', artist: '', description: '', price: 0, category_id: 1, genre_id: 1, stock_count: 0, image_url: '', section: '' });
-    // Load gallery for existing products
     if (p) {
       fetch(`${API}/products/${p.id}`).then(r => r.json()).then(prod => {
         const imgs = (prod.images || []).map((url, i) => ({ id: i + 1, image_url: url }));
@@ -255,11 +427,43 @@ function ProductsTab({ h, token }) {
     loadProducts();
   };
 
+  const totalPages = Math.ceil(total / limit);
+
   return (
     <div className="fade-in">
       <div className="admin__page-header">
         <h1 className="admin__page-title">Products</h1>
         <button className="btn btn-primary btn-sm" onClick={() => startEdit(null)}>+ Add Product</button>
+      </div>
+
+      <div className="admin__controls glass-card">
+        <div className="admin__search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input 
+            type="text" 
+            placeholder="Search by title or artist..." 
+            value={search} 
+            onChange={e => { setSearch(e.target.value); setPage(1); }} 
+          />
+        </div>
+        <div className="admin__filters-row">
+          <select value={catFilter} onChange={e => { setCatFilter(e.target.value); setPage(1); }}>
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select value={genreFilter} onChange={e => { setGenreFilter(e.target.value); setPage(1); }}>
+            <option value="">All Genres</option>
+            {genres.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+          <div className="admin__limit-select">
+            <label>Show:</label>
+            <select value={limit} onChange={e => { setLimit(parseInt(e.target.value)); setPage(1); }}>
+              <option value="20">20</option>
+              <option value="40">40</option>
+              <option value="60">60</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {editing !== null && (
@@ -308,7 +512,15 @@ function ProductsTab({ h, token }) {
       <div className="admin__table-wrap">
         <table className="admin__table">
           <thead>
-            <tr><th></th><th>ID</th><th>Title</th><th>Artist</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+            <tr>
+              <th></th>
+              <th onClick={() => handleSort('id')} className="admin__sortable">ID {sort === 'id' && (order === 'ASC' ? '↑' : '↓')}</th>
+              <th onClick={() => handleSort('title')} className="admin__sortable">Title {sort === 'title' && (order === 'ASC' ? '↑' : '↓')}</th>
+              <th onClick={() => handleSort('artist')} className="admin__sortable">Artist {sort === 'artist' && (order === 'ASC' ? '↑' : '↓')}</th>
+              <th onClick={() => handleSort('price')} className="admin__sortable">Price {sort === 'price' && (order === 'ASC' ? '↑' : '↓')}</th>
+              <th onClick={() => handleSort('stock_count')} className="admin__sortable">Stock {sort === 'stock_count' && (order === 'ASC' ? '↑' : '↓')}</th>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody>
             {products.map(p => (
@@ -336,6 +548,24 @@ function ProductsTab({ h, token }) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="admin__pagination">
+          <button className="btn btn-outline btn-sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
+          <div className="admin__page-numbers">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+              <button 
+                key={n} 
+                className={`admin__page-btn ${page === n ? 'admin__page-btn--active' : ''}`}
+                onClick={() => setPage(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -37,20 +37,134 @@ router.get('/stats', (req, res) => {
   }
 });
 
+// GET /admin/revenue-stats — cash flow stats for chart
+router.get('/revenue-stats', (req, res) => {
+  const { range = 'week', year } = req.query;
+  const currentYear = year || new Date().getFullYear();
+
+  try {
+    let query = "";
+    let params = [];
+    let labels = [];
+
+    if (range === 'daily') {
+      query = `
+        SELECT strftime('%H', created_at) as label, SUM(total) as value 
+        FROM orders 
+        WHERE status != 'Cancelled' AND date(created_at) = date('now')
+        GROUP BY label ORDER BY label ASC
+      `;
+      labels = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    } else if (range === 'week') {
+      query = `
+        SELECT date(created_at) as label, SUM(total) as value 
+        FROM orders 
+        WHERE status != 'Cancelled' AND created_at >= date('now', '-7 days')
+        GROUP BY label ORDER BY label ASC
+      `;
+    } else if (range === 'month') {
+      query = `
+        SELECT date(created_at) as label, SUM(total) as value 
+        FROM orders 
+        WHERE status != 'Cancelled' AND created_at >= date('now', '-30 days')
+        GROUP BY label ORDER BY label ASC
+      `;
+    } else if (range === '3months' || range === '6months') {
+      const months = range === '3months' ? 3 : 6;
+      query = `
+        SELECT strftime('%Y-%m', created_at) as label, SUM(total) as value 
+        FROM orders 
+        WHERE status != 'Cancelled' AND created_at >= date('now', '-${months} months')
+        GROUP BY label ORDER BY label ASC
+      `;
+    } else if (range === 'year' || range === 'specific_year') {
+      const targetYear = range === 'year' ? new Date().getFullYear() : year;
+      query = `
+        SELECT strftime('%m', created_at) as label, SUM(total) as value 
+        FROM orders 
+        WHERE status != 'Cancelled' AND strftime('%Y', created_at) = ?
+        GROUP BY label ORDER BY label ASC
+      `;
+      params.push(targetYear.toString());
+      labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    }
+
+    const rawData = db.prepare(query).all(...params);
+    
+    // Fill gaps for better chart display
+    let data = [];
+    if (labels.length > 0) {
+      data = labels.map(l => ({
+        label: l,
+        value: rawData.find(d => d.label === l)?.value || 0
+      }));
+    } else {
+      data = rawData;
+    }
+
+    // Annual Growth calculation
+    const thisYearRevenue = db.prepare("SELECT SUM(total) as val FROM orders WHERE status != 'Cancelled' AND strftime('%Y', created_at) = ?").get(currentYear.toString()).val || 0;
+    const lastYearRevenue = db.prepare("SELECT SUM(total) as val FROM orders WHERE status != 'Cancelled' AND strftime('%Y', created_at) = ?").get((currentYear - 1).toString()).val || 0;
+    
+    let annual_growth = 0;
+    if (lastYearRevenue > 0) {
+      annual_growth = ((thisYearRevenue - lastYearRevenue) / lastYearRevenue) * 100;
+    } else if (thisYearRevenue > 0) {
+      annual_growth = 100;
+    }
+
+    res.json({ data, annual_growth: annual_growth.toFixed(1) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Product Management ────────────────────────────────────────
 
-// GET all products (including inactive)
+// GET all products (including inactive) with search, filter, pagination, and sorting
 router.get('/products', (req, res) => {
+  const { search, category_id, genre_id, sort, order, page = 1, limit = 20 } = req.query;
+  const offset = (page - 1) * limit;
+
+  let where = ['1=1'];
+  const params = [];
+
+  if (search) {
+    where.push('(p.title LIKE ? OR p.artist LIKE ?)');
+    params.push(`%${search}%`, `%${search}%`);
+  }
+  if (category_id) {
+    where.push('p.category_id = ?');
+    params.push(category_id);
+  }
+  if (genre_id) {
+    where.push('p.genre_id = ?');
+    params.push(genre_id);
+  }
+
+  const allowedSortColumns = ['id', 'title', 'artist', 'price', 'stock_count', 'created_at'];
+  const sortCol = allowedSortColumns.includes(sort) ? `p.${sort}` : 'p.id';
+  const sortDir = order === 'ASC' ? 'ASC' : 'DESC';
+
   try {
+    const total = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM products p
+      WHERE ${where.join(' AND ')}
+    `).get(...params).count;
+
     const products = db.prepare(`
       SELECT p.*, c.name as category_name, g.name as genre_name, r.name as region_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN genres g ON p.genre_id = g.id
       LEFT JOIN regions r ON p.region_id = r.id
-      ORDER BY p.id DESC
-    `).all();
-    res.json(products);
+      WHERE ${where.join(' AND ')}
+      ORDER BY ${sortCol} ${sortDir}
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    res.json({ products, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -144,12 +258,21 @@ router.delete('/products/:id', (req, res) => {
 
 // GET all orders with optional status filter
 router.get('/orders', (req, res) => {
-  const { status, search } = req.query;
+  const { status, search, date } = req.query;
   let where = ['1=1'];
   const params = [];
 
   if (status) { where.push('o.status = ?'); params.push(status); }
   if (search) { where.push('(o.ship_name LIKE ? OR o.guest_email LIKE ? OR CAST(o.id AS TEXT) = ?)'); params.push(`%${search}%`, `%${search}%`, search); }
+  
+  if (date === 'today') {
+    where.push("date(o.created_at) = date('now')");
+  } else if (date === 'yesterday') {
+    where.push("date(o.created_at) = date('now', '-1 day')");
+  } else if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    where.push("date(o.created_at) = ?");
+    params.push(date);
+  }
 
   try {
     const orders = db.prepare(`
