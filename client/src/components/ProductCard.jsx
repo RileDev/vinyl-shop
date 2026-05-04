@@ -21,6 +21,11 @@ export default function ProductCard({ product }) {
         {product.compare_price && (
           <span className="product-card__sale-badge">{t('productCard.sale')}</span>
         )}
+        {product.category_slug && (
+          <span className="product-card__format-badge">
+            {product.category_slug === 'vinyls' ? 'Vinyl' : product.category_slug === 'cds' ? 'CD' : ''}
+          </span>
+        )}
         {!inStock && <div className="product-card__out-of-stock">{t('productCard.outOfStock')}</div>}
       </Link>
 

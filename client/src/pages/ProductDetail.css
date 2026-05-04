@@ -70,6 +70,14 @@
   margin-bottom: 1.25rem;
 }
 
+.badge--format {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  padding: 0.2rem 0.75rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-glow);
+}
+
 .pd__pricing {
   display: flex;
   align-items: baseline;

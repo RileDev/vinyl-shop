@@ -108,6 +108,12 @@ export default function ProductDetail() {
           <h1 className="pd__title">{product.title}</h1>
 
           <div className="pd__meta">
+            {product.category_name && (
+              <span className="badge badge--format">
+                {product.category_slug === 'vinyls' ? 'Vinyl' : 
+                 product.category_slug === 'cds' ? 'CD' : product.category_name}
+              </span>
+            )}
             {product.release_year && <span className="badge">{product.release_year}</span>}
             {product.condition && <span className="badge">{product.condition}</span>}
             {product.label && <span className="badge">{product.label}</span>}
