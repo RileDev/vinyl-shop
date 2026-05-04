@@ -1,0 +1,135 @@
+/* Account Dashboard */
+.account { padding-top: 2rem; }
+
+.account__layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.account__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: sticky;
+  top: 80px;
+}
+.account__tab {
+  text-align: left;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+.account__tab:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.account__tab--active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 500;
+}
+.account__tab--danger:hover { color: var(--danger); }
+
+.account__content h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.account__empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+/* Profile */
+.account__profile-form { display: flex; flex-direction: column; gap: 1rem; }
+.account__profile-actions { display: flex; gap: 0.5rem; }
+.account__profile-view { display: flex; flex-direction: column; gap: 0.5rem; }
+.account__profile-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.account__profile-row span:first-child { color: var(--text-muted); }
+
+/* Orders */
+.account__orders { display: flex; flex-direction: column; gap: 0.75rem; }
+.account__order-card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition);
+}
+.account__order-card:hover { border-color: var(--border-hover); }
+.account__order-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.account__order-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Wishlist */
+.account__wishlist { display: flex; flex-direction: column; gap: 0.75rem; }
+.account__wish-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.account__wish-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  color: var(--text-primary);
+}
+.account__wish-info img {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+.account__wish-title { font-weight: 600; font-size: 0.9rem; }
+.account__wish-artist { font-size: 0.78rem; color: var(--text-muted); }
+.account__wish-actions { display: flex; align-items: center; gap: 1rem; }
+.account__wish-price { color: var(--accent); font-weight: 600; }
+
+/* Addresses */
+.account__addr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.account__addr-header h2 { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.account__addresses { display: flex; flex-direction: column; gap: 0.75rem; }
+.account__addr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.account__addr-item p { font-size: 0.85rem; color: var(--text-secondary); }
+
+@media (max-width: 768px) {
+  .account__layout { grid-template-columns: 1fr; }
+  .account__tabs { flex-direction: row; overflow-x: auto; position: static; }
+}
